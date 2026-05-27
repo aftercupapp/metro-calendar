@@ -118,11 +118,11 @@
         }
         .day-block.today .no-event { color: rgba(255,255,255,0.7); }
 
-        /* App bar – nagyobb gap */
+        /* App bar – WP stílus: nincs gap, egyenlő elosztás */
         .app-bar {
             position: fixed; bottom: 0; left: 0; width: 100%; height: 72px;
-            background-color: #2A2A2A; text-align: center; z-index: 50;
-            display: flex; justify-content: center; align-items: center; gap: 40px;
+            background-color: #2A2A2A; z-index: 50;
+            display: flex; justify-content: space-around; align-items: center;
         }
 
         .app-bar-btn {
@@ -197,13 +197,25 @@
             margin-top: 4px;
         }
 
+        /* Téma színek */
+        .theme-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 24px; }
+        .theme-swatch {
+            width: 100%; aspect-ratio: 1; cursor: pointer;
+            border: 3px solid transparent; position: relative;
+        }
+        .theme-swatch.active { border-color: var(--wp-white); }
+        .theme-swatch span {
+            display: block; font-size: 10px; text-align: center;
+            margin-top: 6px; color: var(--wp-light-gray); text-transform: lowercase; letter-spacing: 0.5px;
+        }
+
         @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>Calendar</h1>
+        <h1>Aftercup Calendar</h1>
         <div class="month-header">
             <button class="nav-btn" id="prev-day">
                 <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="1.5" fill="none"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -224,6 +236,12 @@
             </svg>
         </button>
         <a href="#new-event" class="app-bar-btn" id="add-btn">+</a>
+        <a href="#settings" class="app-bar-btn" title="Settings">
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+        </a>
     </div>
 
     <!-- Új esemény modal -->
@@ -253,7 +271,62 @@
         </div>
     </div>
 
+    <!-- Settings modal -->
+    <div id="settings" class="event-modal">
+        <h1>Settings</h1>
+        <h2 style="font-weight:300; text-transform:lowercase; margin-bottom:8px;">theme color</h2>
+        <div class="theme-grid" id="theme-grid"></div>
+        <div class="btn-row">
+            <a href="#" class="wp-button">back</a>
+        </div>
+    </div>
+
     <script>
+        // Témák
+        var themes = [
+            { name: 'pink',    color: '#FF0097' },
+            { name: 'blue',    color: '#1BA1E2' },
+            { name: 'green',   color: '#339933' },
+            { name: 'orange',  color: '#E3A21A' },
+            { name: 'red',     color: '#E51400' },
+            { name: 'purple',  color: '#AA00FF' },
+            { name: 'teal',    color: '#00ABA9' },
+            { name: 'lime',    color: '#8CBF26' }
+        ];
+
+        function applyTheme(color) {
+            document.documentElement.style.setProperty('--wp-accent', color);
+            localStorage.setItem('wp_theme', color);
+        }
+
+        function renderThemeGrid() {
+            var grid = document.getElementById('theme-grid');
+            grid.innerHTML = '';
+            var current = localStorage.getItem('wp_theme') || '#FF0097';
+            themes.forEach(function(t) {
+                var wrap = document.createElement('div');
+                var swatch = document.createElement('div');
+                swatch.className = 'theme-swatch' + (t.color === current ? ' active' : '');
+                swatch.style.backgroundColor = t.color;
+                swatch.onclick = function() {
+                    applyTheme(t.color);
+                    renderThemeGrid();
+                };
+                var label = document.createElement('span');
+                label.innerText = t.name;
+                wrap.appendChild(swatch);
+                wrap.appendChild(label);
+                grid.appendChild(wrap);
+            });
+        }
+
+        var savedTheme = localStorage.getItem('wp_theme');
+        if (savedTheme) applyTheme(savedTheme);
+
+        document.querySelector('a[href="#settings"]').addEventListener('click', function() {
+            renderThemeGrid();
+        });
+
         var realToday = new Date();
         realToday.setHours(0, 0, 0, 0);
 
