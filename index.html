@@ -3,215 +3,357 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="msapplication-TileColor" content="#FF0097">
+    <meta name="msapplication-TileImage" content="icon-192.png">
+    <meta name="theme-color" content="#FF0097">
+    <link rel="manifest" href="manifest.json">
+
     <title>Calendar</title>
+    
     <style>
         :root {
-            --wp-black: #000000; --wp-white: #FFFFFF; --wp-gray: #1F1F1F;
-            --wp-light-gray: #999999; --wp-accent: #FF0097;
+            --wp-black: #000000;
+            --wp-white: #FFFFFF;
+            --wp-gray: #1F1F1F;
+            --wp-light-gray: #999999;
+            --wp-accent: #FF0097; /* Klasszikus WP Pink */
         }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background-color: var(--wp-black); color: var(--wp-white); font-family: 'Segoe UI', sans-serif; padding: 24px 24px 80px 24px; overflow-x: hidden; }
-        
-        /* Fejléc */
-        .month-header { overflow: hidden; margin-bottom: 16px; display: flex; align-items: center; }
-        .nav-btn { background: none; border: none; color: var(--wp-white); cursor: pointer; display: inline-flex; padding: 0 16px 0 0; }
-        #display-month { font-size: 32px; font-weight: 300; text-transform: lowercase; cursor: pointer; padding: 5px; }
 
-        /* Csempék */
-        .day-block { display: block; background-color: var(--wp-gray); color: var(--wp-white); text-decoration: none; padding: 16px; margin-bottom: 12px; position: relative; }
+        body {
+            background-color: var(--wp-black);
+            color: var(--wp-white);
+            font-family: 'Segoe WP', 'Segoe UI', sans-serif;
+            padding: 24px 24px 80px 24px;
+            overflow-x: hidden;
+        }
+
+        header { margin-bottom: 24px; }
+        
+        h1 {
+            text-transform: uppercase;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: var(--wp-light-gray);
+            margin-bottom: 8px;
+        }
+        
+        /* IE-kompatibilis fejléc elrendezés (float) */
+        .month-header { overflow: hidden; margin-bottom: 16px; display: flex; align-items: center;}
+        
+        .nav-btn {
+            background: none; border: none; color: var(--wp-white);
+            cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+            padding: 0 16px 0 0;
+        }
+        
+        #display-month {
+            display: inline-block;
+            font-size: 32px; font-weight: 300; line-height: 1;
+            margin-top: -2px; text-transform: lowercase;
+        }
+
+        /* 3-napos nézet csempék (Biztonságos flow elrendezés) */
+        .day-block {
+            display: block;
+            background-color: var(--wp-gray);
+            color: var(--wp-white);
+            text-decoration: none;
+            padding: 16px;
+            margin-bottom: 12px;
+            min-height: 140px; /* Hagyja nyúlni, ha kell */
+            position: relative;
+            transition: background-color 0.1s;
+        }
+        
+        .day-block:active { transform: scale(0.98); }
         .day-block.today { background-color: var(--wp-accent); }
-        .day-date { font-size: 32px; font-weight: 300; margin-bottom: 8px; }
-        .event-list-item { font-size: 14px; color: var(--wp-light-gray); margin-top: 4px; border-left: 2px solid var(--wp-white); padding-left: 8px; }
-        .day-block.today .event-list-item { color: var(--wp-white); border-color: var(--wp-white); }
-        .no-events { color: #555; font-style: italic; }
 
-        /* Sáv */
-        .app-bar { position: fixed; bottom: 0; left: 0; width: 100%; height: 72px; background-color: #2A2A2A; display: flex; justify-content: center; align-items: center; gap: 32px; z-index: 50; }
-        .app-bar-btn { display: flex; justify-content: center; align-items: center; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--wp-white); color: var(--wp-white); background: transparent; text-decoration: none; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; }
-        
-        /* Modálok */
-        .event-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: var(--wp-black); z-index: 100; padding: 24px; overflow-y: auto; }
+        .day-label {
+            font-size: 14px;
+            text-transform: uppercase;
+            color: var(--wp-light-gray);
+            letter-spacing: 1px;
+            margin-bottom: 4px; /* Távolságtartás a számtól */
+            display: block;
+        }
+        .day-block.today .day-label { color: var(--wp-white); opacity: 0.8; }
+
+        .day-date {
+            font-size: 56px;
+            font-weight: 300;
+            line-height: 1;
+            margin-bottom: 12px; /* Távolságtartás az esemény szövegétől */
+            display: block;
+        }
+
+        .event-text {
+            display: block;
+            font-size: 16px;
+            color: var(--wp-light-gray);
+            
+            /* Szöveg levágása ("..."), ha túl hosszú */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+        .day-block.today .event-text { color: var(--wp-white); opacity: 0.9; }
+        .day-block.has-event .event-text { color: var(--wp-white); font-weight: 600; }
+
+        /* App bar golyóálló verzió */
+        .app-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 72px;
+            background-color: #2A2A2A; text-align: center; z-index: 50;
+            display: flex; justify-content: center; align-items: center; gap: 24px;
+        }
+
+        .app-bar-btn {
+            display: inline-flex; justify-content: center; align-items: center;
+            width: 44px; height: 44px; border-radius: 22px;
+            border: 2px solid var(--wp-white); color: var(--wp-white); background: transparent;
+            text-decoration: none; font-size: 28px;
+            text-align: center; cursor: pointer; font-family: inherit; font-weight: 300;
+        }
+
+        /* Felugró ablakok JS nélküli nyitása (CSS :target) */
+        .event-modal {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100vw; height: 100vh; background-color: var(--wp-black);
+            z-index: 100; padding: 24px;
+            animation: slideIn 0.25s ease-out forwards;
+        }
+
         .event-modal:target { display: block; }
-        
-        .wp-input { width: 100%; background-color: var(--wp-white); border: 2px solid transparent; color: var(--wp-black); padding: 8px 12px; margin-top: 16px; }
-        .wp-button { display: inline-block; background-color: transparent; border: 2px solid var(--wp-white); color: var(--wp-white); padding: 8px 24px; cursor: pointer; margin-right: 16px; margin-top: 16px; text-decoration: none; }
 
-        /* Havi nézet grid */
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 20px; }
-        .cal-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: var(--wp-gray); cursor: pointer; font-size: 18px; }
-        .cal-cell.today { background: var(--wp-accent); }
-        .cal-cell.has-event { border-bottom: 2px solid var(--wp-accent); }
-        .cal-header { font-size: 12px; color: var(--wp-light-gray); text-align: center; padding: 5px; }
+        /* Űrlap elemek */
+        .wp-input {
+            width: 100%; background-color: var(--wp-white); border: 2px solid transparent;
+            color: var(--wp-black); font-family: inherit; font-size: 16px;
+            padding: 8px 12px; margin-top: 16px; outline: none;
+        }
+        .wp-input:focus { border-color: var(--wp-accent); }
+
+        .wp-button {
+            display: inline-block; background-color: transparent;
+            border: 2px solid var(--wp-white); color: var(--wp-white);
+            text-decoration: none; padding: 8px 24px; font-family: inherit;
+            font-size: 16px; cursor: pointer; text-transform: lowercase;
+        }
+        .wp-button:active { background-color: var(--wp-white); color: var(--wp-black); }
+        
+        .btn-row { overflow: hidden; margin-top: 24px; }
+        .btn-row .wp-button { float: left; margin-right: 16px; }
+        .danger-btn { border-color: var(--wp-accent); color: var(--wp-accent); }
+
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
     </style>
 </head>
 <body>
 
     <header>
+        <h1>Calendar</h1>
         <div class="month-header">
-            <button class="nav-btn" id="prev-day"><svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="1.5" fill="none"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+            <button class="nav-btn" id="prev-day">
+                <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="1.5" fill="none"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
             <h2 id="display-month"></h2>
-            <button class="nav-btn" id="next-day"><svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="1.5" fill="none"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+            <button class="nav-btn" id="next-day" style="padding: 0 0 0 16px;">
+                <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="1.5" fill="none"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
         </div>
     </header>
 
     <div id="three-day-container"></div>
 
     <div class="app-bar">
-        <button class="app-bar-btn" id="fullscreen-btn"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg></button>
+        <button class="app-bar-btn" id="fullscreen-btn" title="Teljes képernyő">
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+            </svg>
+        </button>
         <a href="#new-event" class="app-bar-btn" id="add-btn">+</a>
     </div>
 
-    <!-- Modálok -->
     <div id="new-event" class="event-modal">
-        <h2>New event</h2>
+        <h1>New event</h1>
+        <h2>details</h2>
         <form id="event-form">
-            <input type="date" id="ev-date" class="wp-input" required>
             <input type="text" id="ev-title" class="wp-input" placeholder="Subject" required>
-            <textarea id="ev-desc" class="wp-input" rows="4" placeholder="Notes..."></textarea>
-            <button type="submit" class="wp-button">save</button>
-            <a href="#" class="wp-button">cancel</a>
+            <input type="date" id="ev-date" class="wp-input" required>
+            <textarea id="ev-desc" class="wp-input" rows="4" placeholder="Location or notes..."></textarea>
+            
+            <div class="btn-row">
+                <button type="submit" class="wp-button">save</button>
+                <a href="#" class="wp-button">cancel</a>
+            </div>
         </form>
     </div>
 
-    <div id="view-events" class="event-modal">
-        <h2 id="view-date-display">Date</h2>
-        <div id="events-list-content"></div>
-        <a href="#" class="wp-button">back</a>
-    </div>
-
-    <!-- Havi nézet modál -->
-    <div id="month-view" class="event-modal">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2 id="month-view-title">Month</h2>
-            <a href="#" class="wp-button" style="margin:0;">back</a>
+    <div id="view-event" class="event-modal">
+        <h1 id="view-date-display"></h1>
+        <h2 id="view-title"></h2>
+        <p id="view-desc" style="margin-top: 24px; font-size: 18px; color: #ccc;"></p>
+        
+        <div class="btn-row">
+            <a href="#" class="wp-button">back</a>
+            <button id="delete-btn" class="wp-button danger-btn">delete</button>
         </div>
-        <div class="calendar-grid" id="calendar-grid"></div>
     </div>
 
     <script>
-        var realToday = new Date(); realToday.setHours(0,0,0,0);
-        var viewBaseDate = new Date(); viewBaseDate.setHours(0,0,0,0);
+        // ES5 Kompatibilis JS Logika
+        var realToday = new Date();
+        realToday.setHours(0, 0, 0, 0); 
+
+        var viewBaseDate = new Date(); 
+        viewBaseDate.setHours(0, 0, 0, 0);
+
         var monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        
-        // Havi nézet állapota
-        var monthViewDate = new Date();
+        var daysArr = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        var selectedDateForView = "";
 
-        function getEvents() { var data = localStorage.getItem('wp_calendar_events'); return data ? JSON.parse(data) : {}; }
-        function saveEvents(ev) { localStorage.setItem('wp_calendar_events', JSON.stringify(ev)); }
+        // Adatbázis (LocalStorage)
+        function getEvents() {
+            var data = localStorage.getItem('wp_calendar_events');
+            return data ? JSON.parse(data) : {};
+        }
 
+        function padNumber(num) {
+            return num < 10 ? '0' + num : num;
+        }
+
+        // 3-napos nézet rajzolása
         function renderThreeDayView() {
             var container = document.getElementById('three-day-container');
-            container.innerHTML = '';
+            container.innerHTML = ''; 
+
             document.getElementById('display-month').innerText = monthNames[viewBaseDate.getMonth()] + ' ' + viewBaseDate.getFullYear();
             var events = getEvents();
 
             for (var i = -1; i <= 1; i++) {
                 var d = new Date(viewBaseDate.getTime() + (i * 86400000));
-                var dateStr = d.getFullYear() + '-' + (d.getMonth()+1).toString().padStart(2, '0') + '-' + d.getDate().toString().padStart(2, '0');
-                
-                var dayEvents = events[dateStr] || [];
-                var block = document.createElement('a');
-                block.className = 'day-block' + (i === 0 ? ' today' : '');
-                block.href = "#view-events";
-                block.onclick = function(dStr, evs) { return function() { openEventsList(dStr, evs); }; }(dateStr, dayEvents);
+                var dateStr = d.getFullYear() + '-' + padNumber(d.getMonth() + 1) + '-' + padNumber(d.getDate());
 
-                var html = '<div class="day-date">' + d.getDate() + '</div>';
-                if (dayEvents.length > 0) {
-                    dayEvents.forEach(function(e) { html += '<div class="event-list-item">' + e.title + '</div>'; });
-                } else {
-                    html += '<div class="no-events">No events</div>';
-                }
-                block.innerHTML = html;
+                var diffDays = Math.round((d.getTime() - realToday.getTime()) / 86400000);
+                
+                var label = daysArr[d.getDay()]; 
+                if (diffDays === -1) label = "Yesterday";
+                if (diffDays === 0) label = "Today";
+                if (diffDays === 1) label = "Tomorrow";
+
+                var block = document.createElement('a');
+                block.className = 'day-block';
+                if (diffDays === 0) block.className += ' today'; 
+
+                var hasEvent = events[dateStr];
+                if (hasEvent) block.className += ' has-event';
+
+                block.href = hasEvent ? '#view-event' : '#new-event';
+
+                (function(dStr, ev) {
+                    block.onclick = function() {
+                        if (ev) {
+                            openEventView(dStr);
+                        } else {
+                            document.getElementById('ev-date').value = dStr;
+                            document.getElementById('ev-title').value = '';
+                            document.getElementById('ev-desc').value = '';
+                        }
+                    };
+                })(dateStr, hasEvent);
+
+                var titleHtml = '<div class="day-label">' + label + '</div>';
+                var dateHtml = '<div class="day-date">' + padNumber(d.getDate()) + '</div>';
+                var eventHtml = '<div class="event-text">' + (hasEvent ? hasEvent.title : 'No events') + '</div>';
+
+                block.innerHTML = titleHtml + dateHtml + eventHtml;
                 container.appendChild(block);
             }
         }
 
-        // Havi nézet rajzolása
-        function renderMonthlyView() {
-            var grid = document.getElementById('calendar-grid');
-            grid.innerHTML = '';
-            document.getElementById('month-view-title').innerText = monthNames[monthViewDate.getMonth()] + ' ' + monthViewDate.getFullYear();
-            
-            var firstDay = new Date(monthViewDate.getFullYear(), monthViewDate.getMonth(), 1).getDay();
-            var daysInMonth = new Date(monthViewDate.getFullYear(), monthViewDate.getMonth() + 1, 0).getDate();
+        // Részletek megnyitása
+        function openEventView(dateStr) {
             var events = getEvents();
-
-            // Napok fejléce
-            ["S","M","T","W","T","F","S"].forEach(function(d){ grid.innerHTML += '<div class="cal-header">'+d+'</div>'; });
-
-            // Üres cellák
-            for(var i=0; i<firstDay; i++) grid.innerHTML += '<div></div>';
-
-            // Napok
-            for(var d=1; d<=daysInMonth; d++) {
-                var dStr = monthViewDate.getFullYear() + '-' + (monthViewDate.getMonth()+1).toString().padStart(2, '0') + '-' + d.toString().padStart(2, '0');
-                var isToday = (d === realToday.getDate() && monthViewDate.getMonth() === realToday.getMonth() && monthViewDate.getFullYear() === realToday.getFullYear());
-                var hasEv = (events[dStr] && events[dStr].length > 0);
-                
-                var div = document.createElement('div');
-                div.className = 'cal-cell' + (isToday ? ' today' : '') + (hasEv ? ' has-event' : '');
-                div.innerText = d;
-                div.onclick = function(dateStr) { return function() { 
-                    viewBaseDate = new Date(dateStr); 
-                    renderThreeDayView(); 
-                    window.location.hash = '#'; 
-                }; }(dStr);
-                grid.appendChild(div);
+            var ev = events[dateStr];
+            if (ev) {
+                selectedDateForView = dateStr;
+                document.getElementById('view-date-display').innerText = dateStr.replace(/-/g, '/');
+                document.getElementById('view-title').innerText = ev.title;
+                document.getElementById('view-desc').innerText = ev.desc;
             }
         }
 
-        function openEventsList(dateStr, evs) {
-            document.getElementById('view-date-display').innerText = dateStr;
-            var listDiv = document.getElementById('events-list-content');
-            listDiv.innerHTML = '';
-            evs.forEach(function(ev) {
-                var div = document.createElement('div');
-                div.style.marginBottom = "20px";
-                div.innerHTML = '<h3>' + ev.title + '</h3><p>' + ev.desc + '</p>';
-                var del = document.createElement('button');
-                del.className = 'wp-button';
-                del.innerText = 'delete';
-                del.onclick = function() { deleteEvent(dateStr, ev.id); };
-                div.appendChild(del);
-                listDiv.appendChild(div);
-            });
-        }
-
-        function deleteEvent(dateStr, id) {
-            var events = getEvents();
-            events[dateStr] = events[dateStr].filter(function(e) { return e.id !== id; });
-            saveEvents(events);
-            window.location.hash = '#';
+        // Lapozás gombok
+        document.getElementById('prev-day').onclick = function() {
+            viewBaseDate.setTime(viewBaseDate.getTime() - 86400000);
             renderThreeDayView();
-        }
+        };
 
+        document.getElementById('next-day').onclick = function() {
+            viewBaseDate.setTime(viewBaseDate.getTime() + 86400000);
+            renderThreeDayView();
+        };
+
+        // Új hozzáadása
+        document.getElementById('add-btn').onclick = function() {
+            var d = new Date();
+            var ts = d.getFullYear() + '-' + padNumber(d.getMonth() + 1) + '-' + padNumber(d.getDate());
+            document.getElementById('ev-date').value = ts;
+            document.getElementById('ev-title').value = '';
+            document.getElementById('ev-desc').value = '';
+        };
+
+        // Mentés
         document.getElementById('event-form').onsubmit = function(e) {
-            e.preventDefault();
-            var d = document.getElementById('ev-date').value;
-            var t = document.getElementById('ev-title').value;
-            var des = document.getElementById('ev-desc').value;
+            e.preventDefault(); 
+            var dateVal = document.getElementById('ev-date').value;
+            var titleVal = document.getElementById('ev-title').value;
+            var descVal = document.getElementById('ev-desc').value;
+            
             var events = getEvents();
-            if (!events[d]) events[d] = [];
-            events[d].push({ id: Date.now(), title: t, desc: des });
-            saveEvents(events);
+            events[dateVal] = { title: titleVal, desc: descVal };
+            localStorage.setItem('wp_calendar_events', JSON.stringify(events));
+            
+            window.location.hash = '#'; 
+            renderThreeDayView();
+        };
+
+        // Törlés
+        document.getElementById('delete-btn').onclick = function() {
+            var events = getEvents();
+            delete events[selectedDateForView];
+            localStorage.setItem('wp_calendar_events', JSON.stringify(events));
+            
             window.location.hash = '#';
             renderThreeDayView();
         };
 
-        // Havi nézet nyitása
-        document.getElementById('display-month').onclick = function() {
-            window.location.hash = '#month-view';
-            renderMonthlyView();
+        // Teljes képernyő logika
+        document.getElementById('fullscreen-btn').onclick = function() {
+            var doc = window.document;
+            var docEl = doc.documentElement;
+
+            var requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+            var cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
+
+            if(!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
+                if(requestFullScreen) {
+                    requestFullScreen.call(docEl);
+                }
+            }
+            else {
+                if(cancelFullScreen) {
+                    cancelFullScreen.call(doc);
+                }
+            }
         };
 
-        document.getElementById('prev-day').onclick = function() { viewBaseDate.setDate(viewBaseDate.getDate() - 1); renderThreeDayView(); };
-        document.getElementById('next-day').onclick = function() { viewBaseDate.setDate(viewBaseDate.getDate() + 1); renderThreeDayView(); };
-        
-        document.getElementById('fullscreen-btn').onclick = function() {
-            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-            else document.exitFullscreen();
-        };
-        
+        // Kezdő renderelés
         renderThreeDayView();
     </script>
 </body>
