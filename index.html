@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- iOS / Windows / Android kezdőképernyő beállítások -->
     <link rel="apple-touch-icon" href="icon-192.png">
     <meta name="msapplication-TileColor" content="#FF0097">
     <meta name="msapplication-TileImage" content="icon-192.png">
@@ -44,16 +43,16 @@
         }
         
         /* IE-kompatibilis fejléc elrendezés (float) */
-        .month-header { overflow: hidden; margin-bottom: 16px; }
+        .month-header { overflow: hidden; margin-bottom: 16px; display: flex; align-items: center;}
         
         .nav-btn {
             background: none; border: none; color: var(--wp-white);
-            font-size: 24px; cursor: pointer; display: inline-block;
-            float: left; padding: 0 16px 0 0;
+            cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+            padding: 0 16px 0 0;
         }
         
         #display-month {
-            display: inline-block; float: left;
+            display: inline-block;
             font-size: 32px; font-weight: 300; line-height: 1;
             margin-top: -2px; text-transform: lowercase;
         }
@@ -110,13 +109,15 @@
         .app-bar {
             position: fixed; bottom: 0; left: 0; width: 100%; height: 72px;
             background-color: #2A2A2A; text-align: center; z-index: 50;
+            display: flex; justify-content: center; align-items: center; gap: 24px;
         }
 
         .app-bar-btn {
-            display: inline-block; width: 44px; height: 44px; border-radius: 22px;
-            border: 2px solid var(--wp-white); color: var(--wp-white);
-            text-decoration: none; font-size: 28px; line-height: 38px;
-            margin-top: 14px; text-align: center;
+            display: inline-flex; justify-content: center; align-items: center;
+            width: 44px; height: 44px; border-radius: 22px;
+            border: 2px solid var(--wp-white); color: var(--wp-white); background: transparent;
+            text-decoration: none; font-size: 28px;
+            text-align: center; cursor: pointer; font-family: inherit; font-weight: 300;
         }
 
         /* Felugró ablakok JS nélküli nyitása (CSS :target) */
@@ -157,20 +158,27 @@
     <header>
         <h1>Calendar</h1>
         <div class="month-header">
-            <button class="nav-btn" id="prev-day">&#9664;</button>
+            <button class="nav-btn" id="prev-day">
+                <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="1.5" fill="none"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
             <h2 id="display-month"></h2>
-            <button class="nav-btn" id="next-day" style="padding: 0 0 0 16px;">&#9654;</button>
+            <button class="nav-btn" id="next-day" style="padding: 0 0 0 16px;">
+                <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="1.5" fill="none"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
         </div>
     </header>
 
-    <!-- Napi nézet csempéi (JS generálja) -->
     <div id="three-day-container"></div>
 
     <div class="app-bar">
+        <button class="app-bar-btn" id="fullscreen-btn" title="Teljes képernyő">
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+            </svg>
+        </button>
         <a href="#new-event" class="app-bar-btn" id="add-btn">+</a>
     </div>
 
-    <!-- Új esemény űrlap -->
     <div id="new-event" class="event-modal">
         <h1>New event</h1>
         <h2>details</h2>
@@ -186,7 +194,6 @@
         </form>
     </div>
 
-    <!-- Esemény megtekintése -->
     <div id="view-event" class="event-modal">
         <h1 id="view-date-display"></h1>
         <h2 id="view-title"></h2>
@@ -324,6 +331,26 @@
             
             window.location.hash = '#';
             renderThreeDayView();
+        };
+
+        // Teljes képernyő logika
+        document.getElementById('fullscreen-btn').onclick = function() {
+            var doc = window.document;
+            var docEl = doc.documentElement;
+
+            var requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+            var cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
+
+            if(!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
+                if(requestFullScreen) {
+                    requestFullScreen.call(docEl);
+                }
+            }
+            else {
+                if(cancelFullScreen) {
+                    cancelFullScreen.call(doc);
+                }
+            }
         };
 
         // Kezdő renderelés
