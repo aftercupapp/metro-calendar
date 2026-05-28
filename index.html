@@ -197,6 +197,76 @@
             margin-top: 4px;
         }
 
+        /* Havi nézet overlay */
+        #month-overlay {
+            display: none;
+            position: fixed; top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: var(--wp-black);
+            z-index: 200; padding: 24px 16px 80px 16px;
+            overflow-y: auto;
+            animation: slideIn 0.2s ease-out forwards;
+        }
+        #month-overlay.open { display: block; }
+
+        .mo-header {
+            display: flex; align-items: center; margin-bottom: 20px;
+        }
+        .mo-nav {
+            background: none; border: none; color: var(--wp-white);
+            cursor: pointer; padding: 0 16px 0 0;
+            display: inline-flex; align-items: center;
+        }
+        .mo-nav.right { padding: 0 0 0 16px; }
+        #mo-month-label {
+            font-size: 28px; font-weight: 300;
+            text-transform: lowercase; line-height: 1; flex: 1;
+        }
+
+        .mo-weekdays {
+            display: grid; grid-template-columns: repeat(7, 1fr);
+            margin-bottom: 4px;
+        }
+        .mo-wd {
+            text-align: center; font-size: 11px; font-weight: 600;
+            letter-spacing: 1px; color: var(--wp-light-gray);
+            text-transform: uppercase; padding: 4px 0;
+        }
+
+        .mo-grid {
+            display: grid; grid-template-columns: repeat(7, 1fr);
+            gap: 3px;
+        }
+        .mo-cell {
+            aspect-ratio: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            cursor: pointer; position: relative;
+            font-size: 16px; font-weight: 300;
+            color: var(--wp-white);
+        }
+        .mo-cell.empty { cursor: default; }
+        .mo-cell.today {
+            background-color: var(--wp-accent);
+        }
+        .mo-cell.has-event:not(.today)::after {
+            content: '';
+            display: block;
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background-color: var(--wp-accent);
+            position: absolute; bottom: 4px;
+        }
+        .mo-cell.today.has-event::after {
+            background-color: var(--wp-white);
+        }
+        .mo-cell:not(.empty):active { opacity: 0.6; }
+        .mo-close {
+            position: absolute; top: 24px; right: 16px;
+            background: none; border: none; color: var(--wp-white);
+            font-size: 28px; cursor: pointer; line-height: 1;
+            font-weight: 300;
+        }
+
         /* Téma színek */
         .theme-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 24px; }
         .theme-swatch {
@@ -214,13 +284,37 @@
 </head>
 <body>
 
+    <!-- Havi nézet overlay -->
+    <div id="month-overlay">
+        <div class="mo-header">
+            <button class="mo-nav" id="mo-prev">
+                <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="1.5" fill="none"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <span id="mo-month-label"></span>
+            <button class="mo-nav right" id="mo-next">
+                <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="1.5" fill="none"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+            <button class="mo-close" id="mo-close">&#x2715;</button>
+        </div>
+        <div class="mo-weekdays">
+            <div class="mo-wd">Mo</div>
+            <div class="mo-wd">Tu</div>
+            <div class="mo-wd">We</div>
+            <div class="mo-wd">Th</div>
+            <div class="mo-wd">Fr</div>
+            <div class="mo-wd" style="color:var(--wp-accent)">Sa</div>
+            <div class="mo-wd" style="color:var(--wp-accent)">Su</div>
+        </div>
+        <div class="mo-grid" id="mo-grid"></div>
+    </div>
+
     <header>
         <h1>Aftercup Calendar</h1>
         <div class="month-header">
             <button class="nav-btn" id="prev-day">
                 <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="1.5" fill="none"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </button>
-            <h2 id="display-month"></h2>
+        <h2 id="display-month" style="cursor:pointer;" title="Monthly view"></h2>
             <button class="nav-btn" id="next-day" style="padding: 0 0 0 16px;">
                 <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="1.5" fill="none"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
@@ -471,7 +565,89 @@
             renderThreeDayView();
         }
 
-        document.getElementById('prev-day').onclick = function() {
+        // --- Havi nézet logika ---
+        var moDate = new Date(viewBaseDate.getFullYear(), viewBaseDate.getMonth(), 1);
+
+        function renderMonthOverlay() {
+            var events = getEvents();
+            var y = moDate.getFullYear();
+            var m = moDate.getMonth();
+
+            document.getElementById('mo-month-label').innerText = monthNames[m] + ' ' + y;
+
+            var grid = document.getElementById('mo-grid');
+            grid.innerHTML = '';
+
+            // Hónap első napjának hétfőhöz igazított eltolása (0=H...6=V)
+            var firstDay = new Date(y, m, 1).getDay(); // 0=V,1=H...6=Sz
+            var offset = (firstDay === 0) ? 6 : firstDay - 1;
+            var daysInMonth = new Date(y, m + 1, 0).getDate();
+
+            for (var i = 0; i < offset; i++) {
+                var empty = document.createElement('div');
+                empty.className = 'mo-cell empty';
+                grid.appendChild(empty);
+            }
+
+            for (var d = 1; d <= daysInMonth; d++) {
+                var cell = document.createElement('div');
+                cell.className = 'mo-cell';
+
+                var dateStr = y + '-' + padNumber(m + 1) + '-' + padNumber(d);
+                var cellDate = new Date(y, m, d);
+                var diffDays = Math.round((cellDate.getTime() - realToday.getTime()) / 86400000);
+
+                if (diffDays === 0) cell.className += ' today';
+
+                var dayEvs = events[dateStr] || [];
+                if (dayEvs.length > 0) cell.className += ' has-event';
+
+                // hétvége szín
+                var dow = cellDate.getDay();
+                if ((dow === 6 || dow === 0) && diffDays !== 0) {
+                    cell.style.color = 'var(--wp-accent)';
+                }
+
+                cell.innerText = d;
+
+                (function(ds) {
+                    cell.onclick = function() {
+                        // Zárjuk az overlayt és ugorjunk a napra
+                        document.getElementById('month-overlay').classList.remove('open');
+                        // Állítsuk a viewBaseDate-et erre a napra
+                        var parts = ds.split('-');
+                        viewBaseDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                        viewBaseDate.setHours(0,0,0,0);
+                        renderThreeDayView();
+                    };
+                })(dateStr);
+
+                grid.appendChild(cell);
+            }
+        }
+
+        document.getElementById('display-month').onclick = function() {
+            moDate = new Date(viewBaseDate.getFullYear(), viewBaseDate.getMonth(), 1);
+            renderMonthOverlay();
+            document.getElementById('month-overlay').classList.add('open');
+        };
+
+        document.getElementById('mo-close').onclick = function() {
+            document.getElementById('month-overlay').classList.remove('open');
+        };
+
+        document.getElementById('mo-prev').onclick = function() {
+            moDate.setMonth(moDate.getMonth() - 1);
+            renderMonthOverlay();
+        };
+
+        document.getElementById('mo-next').onclick = function() {
+            moDate.setMonth(moDate.getMonth() + 1);
+            renderMonthOverlay();
+        };
+        // --- Havi nézet vége ---
+
+        
             viewBaseDate.setTime(viewBaseDate.getTime() - 86400000);
             renderThreeDayView();
         };
