@@ -131,7 +131,7 @@
             border: 2px solid var(--wp-white); color: var(--wp-white); background: transparent;
             text-decoration: none; font-size: 26px; line-height: 1;
             text-align: center; cursor: pointer; font-family: inherit; font-weight: 300;
-            padding: 0; margin-top: -3px;
+            padding: 0;
         }
 
         /* Modálok */
@@ -215,13 +215,13 @@
         .mo-nav {
             background: none; border: none; color: var(--wp-white);
             cursor: pointer; padding: 0 16px 0 0; float: left;
-            display: inline-block; vertical-align: middle;
+            display: inline-block; vertical-align: middle; line-height: 0;
         }
         .mo-nav.right { padding: 0 0 0 16px; float: left; }
         #mo-month-label {
-            font-size: 28px; font-weight: 300;
+            font-size: 32px; font-weight: 300;
             text-transform: lowercase; line-height: 1;
-            display: inline-block; vertical-align: middle;
+            float: left; display: inline-block;
         }
         .mo-close {
             position: absolute; top: 0; right: 0;
@@ -280,10 +280,10 @@
             <button class="mo-nav" id="mo-prev">
                 <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="1.5" fill="none"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </button>
+            <span id="mo-month-label"></span>
             <button class="mo-nav right" id="mo-next">
                 <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="1.5" fill="none"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
-            <span id="mo-month-label"></span>
             <button class="mo-close" id="mo-close">&#x2715;</button>
         </div>
         <table id="mo-table">
@@ -323,7 +323,12 @@
                 <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
             </svg>
         </button>
-        <a href="#new-event" class="app-bar-btn" id="add-btn">+</a>
+        <a href="#new-event" class="app-bar-btn" id="add-btn">
+            <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        </a>
         <a href="#settings" class="app-bar-btn" title="Settings">
             <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
                 <circle cx="12" cy="12" r="3"></circle>
