@@ -210,73 +210,63 @@
         #month-overlay.open { display: block; }
 
         .mo-header {
-            display: flex; align-items: center; margin-bottom: 20px;
+            overflow: hidden; margin-bottom: 20px; position: relative;
         }
         .mo-nav {
             background: none; border: none; color: var(--wp-white);
-            cursor: pointer; padding: 0 16px 0 0;
-            display: inline-flex; align-items: center;
+            cursor: pointer; padding: 0 16px 0 0; float: left;
+            display: inline-block; vertical-align: middle;
         }
-        .mo-nav.right { padding: 0 0 0 16px; }
+        .mo-nav.right { padding: 0 0 0 16px; float: left; }
         #mo-month-label {
             font-size: 28px; font-weight: 300;
-            text-transform: lowercase; line-height: 1; flex: 1;
+            text-transform: lowercase; line-height: 1;
+            display: inline-block; vertical-align: middle;
         }
-
-        .mo-weekdays {
-            display: grid; grid-template-columns: repeat(7, 1fr);
-            margin-bottom: 4px;
-        }
-        .mo-wd {
-            text-align: center; font-size: 11px; font-weight: 600;
-            letter-spacing: 1px; color: var(--wp-light-gray);
-            text-transform: uppercase; padding: 4px 0;
-        }
-
-        .mo-grid {
-            display: grid; grid-template-columns: repeat(7, 1fr);
-            gap: 3px;
-        }
-        .mo-cell {
-            width: 100%; height: 44px; display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            cursor: pointer; position: relative;
-            font-size: 16px; font-weight: 300;
-            color: var(--wp-white);
-        }
-        .mo-cell.empty { cursor: default; }
-        .mo-cell.today {
-            background-color: var(--wp-accent);
-        }
-        .mo-cell.has-event:not(.today)::after {
-            content: '';
-            display: block;
-            width: 5px; height: 5px;
-            border-radius: 50%;
-            background-color: var(--wp-accent);
-            position: absolute; bottom: 4px;
-        }
-        .mo-cell.today.has-event::after {
-            background-color: var(--wp-white);
-        }
-        .mo-cell:not(.empty):active { opacity: 0.6; }
         .mo-close {
-            position: absolute; top: 24px; right: 16px;
+            position: absolute; top: 0; right: 0;
             background: none; border: none; color: var(--wp-white);
             font-size: 28px; cursor: pointer; line-height: 1;
             font-weight: 300;
         }
 
+        /* Table-alapú rács */
+        #mo-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        #mo-table th {
+            text-align: center; font-size: 11px; font-weight: 600;
+            letter-spacing: 1px; color: var(--wp-light-gray);
+            text-transform: uppercase; padding: 4px 0 8px 0;
+        }
+        #mo-table th.weekend { color: var(--wp-accent); }
+        #mo-table td {
+            text-align: center; vertical-align: middle;
+            height: 44px; font-size: 16px; font-weight: 300;
+            color: var(--wp-white); cursor: pointer;
+            position: relative;
+        }
+        #mo-table td.empty { cursor: default; }
+        #mo-table td.today { background-color: var(--wp-accent); }
+        #mo-table td.weekend-cell { color: var(--wp-accent); }
+        #mo-table td.today.weekend-cell { color: var(--wp-white); }
+        #mo-table td.has-event { font-weight: 600; }
+
         /* Téma színek */
-        .theme-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 24px; }
+        .theme-grid { margin-top: 24px; overflow: hidden; }
+        .theme-row { overflow: hidden; margin-bottom: 12px; }
+        .theme-swatch-wrap { float: left; width: 25%; padding: 0 6px 0 0; box-sizing: border-box; }
+        .theme-swatch-wrap:nth-child(4n) { padding-right: 0; }
         .theme-swatch {
-            width: 100%; aspect-ratio: 1; cursor: pointer;
-            border: 3px solid transparent; position: relative;
+            width: 100%; height: 64px; cursor: pointer;
+            border: 3px solid transparent;
         }
         .theme-swatch.active { border-color: var(--wp-white); }
-        .theme-swatch span {
-            display: block; font-size: 10px; text-align: center;
-            margin-top: 6px; color: var(--wp-light-gray); text-transform: lowercase; letter-spacing: 0.5px;
+        .theme-swatch-wrap span {
+            display: block; font-size: 11px; text-align: center;
+            margin-top: 5px; color: var(--wp-light-gray); text-transform: lowercase; letter-spacing: 0.5px;
         }
 
         @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
@@ -290,22 +280,26 @@
             <button class="mo-nav" id="mo-prev">
                 <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="1.5" fill="none"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </button>
-            <span id="mo-month-label"></span>
             <button class="mo-nav right" id="mo-next">
                 <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="1.5" fill="none"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
+            <span id="mo-month-label"></span>
             <button class="mo-close" id="mo-close">&#x2715;</button>
         </div>
-        <div class="mo-weekdays">
-            <div class="mo-wd">Mo</div>
-            <div class="mo-wd">Tu</div>
-            <div class="mo-wd">We</div>
-            <div class="mo-wd">Th</div>
-            <div class="mo-wd">Fr</div>
-            <div class="mo-wd" style="color:var(--wp-accent)">Sa</div>
-            <div class="mo-wd" style="color:var(--wp-accent)">Su</div>
-        </div>
-        <div class="mo-grid" id="mo-grid"></div>
+        <table id="mo-table">
+            <thead>
+                <tr>
+                    <th>Mo</th>
+                    <th>Tu</th>
+                    <th>We</th>
+                    <th>Th</th>
+                    <th>Fr</th>
+                    <th class="weekend">Sa</th>
+                    <th class="weekend">Su</th>
+                </tr>
+            </thead>
+            <tbody id="mo-tbody"></tbody>
+        </table>
     </div>
 
     <header>
@@ -397,8 +391,16 @@
             var grid = document.getElementById('theme-grid');
             grid.innerHTML = '';
             var current = localStorage.getItem('wp_theme') || '#FF0097';
-            themes.forEach(function(t) {
+            var row;
+            themes.forEach(function(t, idx) {
+                if (idx % 4 === 0) {
+                    row = document.createElement('div');
+                    row.className = 'theme-row';
+                    grid.appendChild(row);
+                }
                 var wrap = document.createElement('div');
+                wrap.className = 'theme-swatch-wrap';
+
                 var swatch = document.createElement('div');
                 swatch.className = 'theme-swatch' + (t.color === current ? ' active' : '');
                 swatch.style.backgroundColor = t.color;
@@ -406,11 +408,13 @@
                     applyTheme(t.color);
                     renderThemeGrid();
                 };
+
                 var label = document.createElement('span');
                 label.innerText = t.name;
+
                 wrap.appendChild(swatch);
                 wrap.appendChild(label);
-                grid.appendChild(wrap);
+                row.appendChild(wrap);
             });
         }
 
@@ -575,54 +579,52 @@
 
             document.getElementById('mo-month-label').innerText = monthNames[m] + ' ' + y;
 
-            var grid = document.getElementById('mo-grid');
-            grid.innerHTML = '';
+            var tbody = document.getElementById('mo-tbody');
+            tbody.innerHTML = '';
 
-            // Hónap első napjának hétfőhöz igazított eltolása (0=H...6=V)
-            var firstDay = new Date(y, m, 1).getDay(); // 0=V,1=H...6=Sz
+            var firstDay = new Date(y, m, 1).getDay();
             var offset = (firstDay === 0) ? 6 : firstDay - 1;
             var daysInMonth = new Date(y, m + 1, 0).getDate();
 
-            for (var i = 0; i < offset; i++) {
-                var empty = document.createElement('div');
-                empty.className = 'mo-cell empty';
-                grid.appendChild(empty);
-            }
+            var cells = [];
+            for (var i = 0; i < offset; i++) cells.push(null);
+            for (var d = 1; d <= daysInMonth; d++) cells.push(d);
+            while (cells.length % 7 !== 0) cells.push(null);
 
-            for (var d = 1; d <= daysInMonth; d++) {
-                var cell = document.createElement('div');
-                cell.className = 'mo-cell';
+            for (var r = 0; r < cells.length / 7; r++) {
+                var tr = document.createElement('tr');
+                for (var c = 0; c < 7; c++) {
+                    var day = cells[r * 7 + c];
+                    var td = document.createElement('td');
 
-                var dateStr = y + '-' + padNumber(m + 1) + '-' + padNumber(d);
-                var cellDate = new Date(y, m, d);
-                var diffDays = Math.round((cellDate.getTime() - realToday.getTime()) / 86400000);
+                    if (day === null) {
+                        td.className = 'empty';
+                    } else {
+                        var dateStr = y + '-' + padNumber(m + 1) + '-' + padNumber(day);
+                        var cellDate = new Date(y, m, day);
+                        var diffDays = Math.round((cellDate.getTime() - realToday.getTime()) / 86400000);
+                        var dow = cellDate.getDay();
+                        var cls = '';
+                        if (diffDays === 0) cls += ' today';
+                        if (dow === 6 || dow === 0) cls += ' weekend-cell';
+                        var dayEvs = events[dateStr] || [];
+                        if (dayEvs.length > 0) cls += ' has-event';
+                        td.className = cls;
+                        td.innerText = day;
 
-                if (diffDays === 0) cell.className += ' today';
-
-                var dayEvs = events[dateStr] || [];
-                if (dayEvs.length > 0) cell.className += ' has-event';
-
-                // hétvége szín
-                var dow = cellDate.getDay();
-                if ((dow === 6 || dow === 0) && diffDays !== 0) {
-                    cell.style.color = 'var(--wp-accent)';
+                        (function(ds) {
+                            td.onclick = function() {
+                                document.getElementById('month-overlay').classList.remove('open');
+                                var parts = ds.split('-');
+                                viewBaseDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                                viewBaseDate.setHours(0, 0, 0, 0);
+                                renderThreeDayView();
+                            };
+                        })(dateStr);
+                    }
+                    tr.appendChild(td);
                 }
-
-                cell.innerText = d;
-
-                (function(ds) {
-                    cell.onclick = function() {
-                        // Zárjuk az overlayt és ugorjunk a napra
-                        document.getElementById('month-overlay').classList.remove('open');
-                        // Állítsuk a viewBaseDate-et erre a napra
-                        var parts = ds.split('-');
-                        viewBaseDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-                        viewBaseDate.setHours(0,0,0,0);
-                        renderThreeDayView();
-                    };
-                })(dateStr);
-
-                grid.appendChild(cell);
+                tbody.appendChild(tr);
             }
         }
 
