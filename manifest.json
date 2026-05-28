@@ -1,8 +1,8 @@
 {
-  "name": "Metro Calendar",
+  "name": "Aftercup Calendar",
   "short_name": "Calendar",
   "start_url": "./index.html",
-  "display": "standalone",
+  "display": "fullscreen",
   "background_color": "#000000",
   "theme_color": "#FF0097",
   "icons": [
