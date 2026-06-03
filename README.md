@@ -1,8 +1,8 @@
 # Metro Calendar
 
-A clean, modern web-based calendar application designed specifically for everyday use on classic Windows Phone devices today.
+A clean, modern web-based calendar pwa designed specifically for everyday use on classic Windows Phone devices today.
 
-This project is a custom, optimized, and redesigned version of the well-known **Aftercup Calendar**. The goal was to transfer the stable foundations of the existing calendar to an interface that perfectly matches the iconic tiled (Metro UI) design language of Windows Phone systems.
+This project is a custom, optimized, and redesigned version of the **Aftercup Calendar**. The goal was to transfer the stable foundations of the existing calendar to an interface that perfectly matches the iconic tiled (Metro UI) design language of Windows Phone systems.
 
 ## Key Features
 
@@ -28,7 +28,9 @@ Here are some screenshots of the application in action:
 
 ## Usage and Installation
 
-*(Briefly describe here how to run the web-based app, e.g., a link to GitHub Pages / live version, or how to pin it to the Windows Phone Start screen)*
+* In Microsoft Edge or Monument Browser open the following url: [https://aftercupapp.github.io/metro-calendar/](https://aftercupapp.github.io/metro-calendar/)
+* Pin the page to homescreen as a tile
+* Open the pwa and use the fullscreen button for modern, app-like experiene
 
 ---
 *Built on the Aftercup Calendar engine.*
